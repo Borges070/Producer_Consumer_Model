@@ -1,7 +1,6 @@
 import java.util.concurrent.locks.Lock;
 // Import is not working because is on the same package, it seems i can just use it directly (don't know how)
 // import Bufferzinho.Bufferzinho;
-
 public class Productor extends Thread{
     
     private int id; 
@@ -12,14 +11,14 @@ public class Productor extends Thread{
 
     public Productor(int id, int itemsToProduce, Bufferzinho buffer, Lock mutex ) {
         this.id = id;
-        this.itemsToProduce = 15;
+        this.itemsToProduce = itemsToProduce = 15;
         this.mutex = mutex;
         this.buffer = buffer;
     }
 
     @Override
     public void run() {
-        if (mutex.tryLock(buffer)){
+        if (mutex.tryLock()){
             System.out.println("----------------------------------------"); //debug
             System.out.println("Mutex acquired by Produtores " + Productor.this.id); //debug
 
