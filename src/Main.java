@@ -1,5 +1,9 @@
+
 public class Main {
     public static void main(String[] args) throws Exception {
-        System.out.println("Hello, World!");
+        Bufferzinho critic = new Bufferzinho();
+        
+        System.out.println(critic.buffer.length);
     }
+    
 }
