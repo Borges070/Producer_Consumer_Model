@@ -6,7 +6,6 @@ public class Productor extends Thread{
     private int id; 
     private int itemsToProduce;
     private Bufferzinho buffer; // Import buffer class
-    private int semaphore; // Import semaphore class || Sem = 0 (all filled) Sem = 7 (all empty) --> Is now a variable of the class
     private Lock mutex; // Mutex lock for critical section
     private int remainingItems;
 
@@ -19,19 +18,23 @@ public class Productor extends Thread{
 
     @Override
     public void run() {
-        if (mutex.tryLock()){ // How does mutex usage actually works? --> Maybe use semaphore here instead?
+        if (mutex.tryLock()){ // How does mutex usage actually works? --> Maybe use Bufferzinho.semaforo here instead?
             System.out.println("----------------------------------------"); //debug
             System.out.println("Mutex acquired by Productor " + Productor.this.id); //debug
 
-            if (semaphore <= 7){ // trocar
-                while (semaphore <= 7 && Productor.this.remainingItems > 0) { 
-                    semaphore--; 
+            if (Bufferzinho.semaforo <= 7){ // trocar
+                while (Bufferzinho.semaforo <= 7 && Productor.this.remainingItems > 0 && Bufferzinho.semaforo > 0) { 
                     Productor.this.remainingItems--; 
-                    Bufferzinho.buffer[Bufferzinho.getNextPosition()] = false; // see import fault
+                    Bufferzinho.buffer[Bufferzinho.getNextPosition()] = true; // see import fault
+                    Bufferzinho.semaforo--; 
                     
                     // Both are debugging logs
-                    System.out.println("Productor " + Productor.this.id + " produziu um item. Itens restantes para porduzir: " + (Productor.this.remainingItems)); 
-                    System.out.println(semaphore + " \t||Valor do semaforo atual"); 
+                    System.out.println("Productor " + Productor.this.id + " produziu um item. Itens restantes para produzir: " + (Productor.this.remainingItems)); 
+                    System.out.println(Bufferzinho.semaforo + " \t ||\t Valor do semaforo atual"); 
+                }
+
+                if (Productor.this.remainingItems <= 0){
+                    Productor.this.remainingItems = Productor.this.itemsToProduce; 
                 }
 
 
@@ -48,12 +51,14 @@ public class Productor extends Thread{
                 // Flag to indicate the end of cosume --> Productor can play now (Project works based on gambiarra? Then lets refine the code)
                 try {
                     sleep(1000);
+                    System.out.println("rodando1");
+                    System.out.println(Bufferzinho.semaforo);  
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             } else {
 
-                if (Productor.this.remainingItems == 0){
+                if (Productor.this.remainingItems <= 0){
                     Productor.this.remainingItems = Productor.this.itemsToProduce; 
                 }
 
@@ -62,6 +67,8 @@ public class Productor extends Thread{
                 //sleep 
                 try {
                     sleep(1000);
+                    System.out.println("rodando2");
+                    System.out.println(Bufferzinho.semaforo);  
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
