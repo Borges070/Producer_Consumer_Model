@@ -8,46 +8,67 @@ public class Productor extends Thread{
     private Bufferzinho buffer; // Import buffer class
     private int semaphore; // Import semaphore class || Sem = 0 (all filled) Sem = 7 (all empty) --> Is now a variable of the class
     private Lock mutex; // Mutex lock for critical section
+    private int remainingItems;
 
-    public Productor(int id, int itemsToProduce, Bufferzinho buffer, Lock mutex ) {
+     public Productor(int id, int itemsToProduce, Lock mutex) {
         this.id = id;
-        this.itemsToProduce = itemsToProduce = 15;
+        this.remainingItems = itemsToProduce;
         this.mutex = mutex;
-        this.buffer = buffer;
+        this.itemsToProduce = itemsToProduce; 
     }
 
     @Override
     public void run() {
-        if (mutex.tryLock()){
+        if (mutex.tryLock()){ // How does mutex usage actually works? --> Maybe use semaphore here instead?
             System.out.println("----------------------------------------"); //debug
-            System.out.println("Mutex acquired by Produtores " + Productor.this.id); //debug
+            System.out.println("Mutex acquired by Productor " + Productor.this.id); //debug
 
-            if (semaphore > 0){
-                while (semaphore > 0 && Productor.this.itemsToProduce > 0) {
-                    semaphore--;
-                    Productor.this.itemsToProduce--;
-                    Bufferzinho.buffer[Math.abs(semaphore - 7)] = true; // see import fault
+            if (semaphore <= 7){ // trocar
+                while (semaphore <= 7 && Productor.this.remainingItems > 0) { 
+                    semaphore--; 
+                    Productor.this.remainingItems--; 
+                    Bufferzinho.buffer[Bufferzinho.getNextPosition()] = false; // see import fault
                     
                     // Both are debugging logs
-                    System.out.println("Produtores " + Productor.this.id + " produziu um item. Itens restantes para produzir: " + (Productor.this.itemsToProduce));
+                    System.out.println("Productor " + Productor.this.id + " produziu um item. Itens restantes para porduzir: " + (Productor.this.remainingItems)); 
                     System.out.println(semaphore + " \t||Valor do semaforo atual"); 
-                    // Both are debugging logs
                 }
-                System.out.println("Produtores " + Productor.this.id + " terminou de produzir todos os itens."); //debbug
-                // debbug log module for buffer
+
+
+
+                System.out.println("Productor " + Productor.this.id + " terminou de produzir todos os itens."); //debug 
+                // debug log module for buffer
                 for (int i = 0; i < Bufferzinho.buffer.length; i++){
                     System.out.println("Buffer position " + i + ": " + Bufferzinho.buffer[i]);
                 }
+
+
                 System.out.println("---------------------------------------");
                 mutex.unlock();
-                // Flag to indicate the end of production --> consumer can play now (Project works based on gambiarra? Then lets refine the code)
-                sleep(1000);
-            }
-            else {
+                // Flag to indicate the end of cosume --> Productor can play now (Project works based on gambiarra? Then lets refine the code)
+                try {
+                    sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            } else {
+
+                if (Productor.this.remainingItems == 0){
+                    Productor.this.remainingItems = Productor.this.itemsToProduce; 
+                }
+
                 mutex.unlock();
-                sleep(1000);
+
+                //sleep 
+                try {
+                    sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             
             }
+        } else {
+            System.out.print("");
         }
     }
 }
