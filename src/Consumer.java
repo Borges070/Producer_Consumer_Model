@@ -1,25 +1,19 @@
-import java.util.concurrent.locks.Lock;
-// Import is not working because is on the same package, it seems i can just use it directly (don't know how)
-// import Bufferzinho.Bufferzinho;
-
 public class Consumer extends Thread { 
     
     
     private int id; 
     private int itemsToConsume; 
-    private Lock mutex; // Mutex lock for critical section
     private int remainingItems;
 
-    public Consumer(int id, int itemsToConsume, Lock mutex) {
+    public Consumer(int id, int itemsToConsume) {
         this.id = id;
         this.remainingItems = itemsToConsume; 
-        this.mutex = mutex;
         this.itemsToConsume = itemsToConsume;  
     }
 
     @Override
     public void run() {
-        if (mutex.tryLock()){ // How does mutex usage actually works? --> Maybe use Bufferzinho.semaforo here instead?
+        if (Bufferzinho.mutex.tryLock()){ 
             System.out.println("----------------------------------------"); //debug
             System.out.println("Mutex acquired by Consumer " + Consumer.this.id); //debug
 
@@ -27,7 +21,7 @@ public class Consumer extends Thread {
                 while (Bufferzinho.semaforo < 7 && Consumer.this.remainingItems > 0) { 
                     Bufferzinho.semaforo++; 
                     Consumer.this.remainingItems--; 
-                    Bufferzinho.buffer[Bufferzinho.getNextPosition()] = false; // see import fault
+                    Bufferzinho.buffer[Bufferzinho.getNextPosition()] = false; // 
                     
                     // Both are debugging logs
                     System.out.println("Consumer " + Consumer.this.id + " consumiu um item. Itens restantes para consumir: " + (Consumer.this.remainingItems)); 
@@ -36,6 +30,7 @@ public class Consumer extends Thread {
 
                 if (Consumer.this.remainingItems <= 0){
                     Consumer.this.remainingItems = Consumer.this.itemsToConsume; 
+                    this.id++; 
                 }
 
 
@@ -48,8 +43,7 @@ public class Consumer extends Thread {
 
 
                 System.out.println("---------------------------------------");
-                mutex.unlock();
-                // Flag to indicate the end of cosume --> Productor can play now (Project works based on gambiarra? Then lets refine the code)
+                Bufferzinho.mutex.unlock();
                 try {
                     sleep(1000);
                     System.out.println("rodando1");
@@ -58,24 +52,7 @@ public class Consumer extends Thread {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-            } else {
-                
-                if (Consumer.this.remainingItems <= 0){
-                    Consumer.this.remainingItems = Consumer.this.itemsToConsume; 
-                }
-                
-                mutex.unlock();
-                
-                //sleep 
-                try {
-                    sleep(1000);
-                    System.out.println("rodando2");
-                    System.out.println(Bufferzinho.semaforo);   
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            
-            }
+            } 
         } else {
             System.out.print("");
         }
