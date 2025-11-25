@@ -1,17 +1,31 @@
-public class Bufferzinho {
-    boolean[] buffer = new boolean[7];
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
-    public Bufferzinho() {
-        for (int i = 0; i < buffer.length; i++) {
-            buffer[i] = false; 
-        }
+
+public class Bufferzinho {
+    private static int CAPACIDADE_BUFFER = 7;
+    static boolean[] buffer = {false, false, false, false, false, false, false};
+    static int semaforo = 7;
+    static Lock mutex = new ReentrantLock();
 
     
-    for (int i = 0; i < buffer.length; i++){
-        System.out.println("Buffer position " + i + ": " + buffer[i]);
+
+    boolean[] get_arr(){
+        return buffer;
     }
+
+    public static int getNextPosition(){
+        return Math.abs(semaforo - 7);
     }
 
     
 
 }
+
+    // Consumidor consumidor = new Consumidor(mutex, thread_id, QTDE_PRODUCAO)
+
+    
+        
+
+
+
