@@ -8,7 +8,7 @@ public class Bufferzinho {
     // static transforma a variável em uma variável de classe, não de objeto, substitui, nesse caso, a necessidade de um método construtor
     static boolean[] buffer = {false, false, false, false, false, false, false}; // Buffer de 7 posições inicializado
     
-    static int semaforo = 7; // semáforo implementado como uma variável inteira
+    static int semaforo = 7; // semáforo implementado como uma variável inteira || 7 é cheio, 0 é vazio
     static Lock mutex = new ReentrantLock(); // implementa o mutex supracitado
 
 

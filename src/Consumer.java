@@ -1,60 +1,59 @@
-public class Consumer extends Thread { 
-    
-    
-    private int id; 
-    private int itemsToConsume; 
-    private int remainingItems;
+public class Consumer extends Thread {
 
-    public Consumer(int id, int itemsToConsume) {
-        this.id = id;
-        this.remainingItems = itemsToConsume; 
-        this.itemsToConsume = itemsToConsume;  
-    }
+	private int id;
+	private int itemsToConsume;
+	private int remainingItems;
 
-    @Override
-    public void run() {
-        if (Bufferzinho.mutex.tryLock()){ 
-            System.out.println("----------------------------------------"); //debug
-            System.out.println("Mutex acquired by Consumer " + Consumer.this.id); //debug
+	public Consumer(int id, int itemsToConsume) {
+		this.id = id;
+		this.remainingItems = itemsToConsume;
+		this.itemsToConsume = itemsToConsume;
+	}
+    String t12 = "\t".repeat(12);
 
-            if (Bufferzinho.semaforo >= 0){ 
-                while (Bufferzinho.semaforo < 7 && Consumer.this.remainingItems > 0) { 
-                    Bufferzinho.semaforo++; 
-                    Consumer.this.remainingItems--; 
-                    Bufferzinho.buffer[Bufferzinho.getNextPosition()] = false; // 
-                    
-                    // Both are debugging logs
-                    System.out.println("Consumer " + Consumer.this.id + " consumiu um item. Itens restantes para consumir: " + (Consumer.this.remainingItems)); 
-                    System.out.println(Bufferzinho.semaforo + " \t||Valor do semaforo atual"); 
-                }
+	@Override
+	public void run() {
+		if (Bufferzinho.mutex.tryLock()) { // thread tenta obter exclusividade pelo mutex, caso consiga, executa as operações
+			Logs.log("========================================"); // debug
+			Logs.log("CONSUMER " + Consumer.this.id + " ACQUIRED Mutex."); // debug
+            Logs.log(t12 + "[Semaphore:   " + Bufferzinho.semaforo + "]"); // debug
+		
+            while (Bufferzinho.semaforo < 7 && Consumer.this.remainingItems > 0) { // enquanto semáforo indica slots cheios no buffer e thread ainda precisa consumir, executa operações
+                Bufferzinho.semaforo++;
+                Consumer.this.remainingItems--;
+                Bufferzinho.buffer[Bufferzinho.getNextPosition()] = false; // remove item do buffer
 
-                if (Consumer.this.remainingItems <= 0){
-                    Consumer.this.remainingItems = Consumer.this.itemsToConsume; 
-                    this.id++; 
-                }
+                // Esse log aqui foi arrumado para ficar em uma única linha, facilitando a leitura dos logs (agradeco a sugestão do colega IA)
+                Logs.log(String.format("-> C%d consumed 1 item. Remaining: %3d\t\t[Semaphore: %3d]",
+                    Consumer.this.id, Consumer.this.remainingItems, Bufferzinho.semaforo));
+            }
 
+            
 
+            Logs.log("CONSUMER " + Consumer.this.id + " FINISHED its consumption cycle."); // debug
+            // debug log module for buffer
+            Logs.log("--- Current Buffer State ---");
+            for (int i = 0; i < Bufferzinho.buffer.length; i++) {
+                Logs.log("Slot " + i + ": " + (Bufferzinho.buffer[i] ? "FULL" : "EMPTY"));
+            }
 
-                System.out.println("Consumer " + Consumer.this.id + " terminou de consumir todos os itens."); //debug 
-                // debug log module for buffer
-                for (int i = 0; i < Bufferzinho.buffer.length; i++){
-                    System.out.println("Buffer position " + i + ": " + Bufferzinho.buffer[i]);
-                }
+            Bufferzinho.mutex.unlock(); // libera o recurso para outras threads
+            Logs.log("CONSUMER " + Consumer.this.id + " RELEASED Mutex.");
 
+            Logs.log("========================================");
+            try {
+                sleep(1000); // dá um tempo para a thread (também evita que essa thread já concorra com a próxima na tentativa de pegar o lock)
+                Logs.log("CONSUMER " + Consumer.this.id + " is now sleeping...");
+                Logs.log("  [Semaphore: " + Bufferzinho.semaforo + " before re-entry]");
+                if (Consumer.this.remainingItems <= 0) {
+                Consumer.this.remainingItems = Consumer.this.itemsToConsume; // entra com outra thread, para simbolizar que uma acabou e está sendo criada outra
+                this.id++;
+            }
 
-                System.out.println("---------------------------------------");
-                Bufferzinho.mutex.unlock();
-                try {
-                    sleep(1000);
-                    System.out.println("rodando1");
-                    System.out.println(Bufferzinho.semaforo);   
-                    
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            } 
-        } else {
-            System.out.print("");
-        }
-    }
+            } catch (InterruptedException e) {
+                e.printStackTrace(); // trata a exceção de interrupção da thread pelo usuário
+                // a JVM faz a própria implementação da SIGINT, simulando o SIGNAL INTERRUPTION, parecido com o do Linux, e o método sleep deixa o tratamento de erro à mercê do desenvolvedor
+            }
+		} 
+	}
 }
