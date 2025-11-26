@@ -1,4 +1,12 @@
-public class Consumer extends Thread {
+public class Consumer extends Thread { 
+/* Thread
+ - Uma thread é uma linha de execução independente dentro do processo.
+ - Permite execução concorrente de código que nem implementado.
+ - Cada Thread tem um método run() com o trabalho a executar.
+ - Concorrência exige sincronização ao partilhar dados para evitar condições de corrida.
+ - Threads permitem que um programa faça uma tarefa em segundo plano enquanto outra tarefa é executada na frente.(baixar arquivo)
+ - Gasta menos recursos do que processos completos, facilitando multitarefa.
+*/
 
 	private int id;
 	private int itemsToConsume;
@@ -11,15 +19,24 @@ public class Consumer extends Thread {
 	}
     String t12 = "\t".repeat(12);
 
+/*
+ - Mutex (mutual exclusion) conforme estudado em sala:
+ - Mutex é uma trava binária que garante exclusão mútua: apenas uma thread pode ter o lock.
+ - Protege a seção crítica onde se lê/escreve estado partilhado.
+ - Threads que não obtêm o lock devem esperar até que ele seja liberado.
+ - Deve-se manter a região protegida o mais curta possível para reduzir contenção.
+*/
+
 	@Override
 	public void run() {
 		if (Bufferzinho.mutex.tryLock()) { // thread tenta obter exclusividade pelo mutex, caso consiga, executa as operações
+                                           // Conforme estudado em sala, o mutex garante exclusão mútua, evitando condições de corrida
 			Logs.log("========================================"); // debug
 			Logs.log("CONSUMER " + Consumer.this.id + " ACQUIRED Mutex."); // debug
             Logs.log(t12 + "[Semaphore:   " + Bufferzinho.semaforo + "]"); // debug
-		
-            while (Bufferzinho.semaforo < 7 && Consumer.this.remainingItems > 0) { // enquanto semáforo indica slots cheios no buffer e thread ainda precisa consumir, executa operações
-                Bufferzinho.semaforo++;
+		    
+            while (Bufferzinho.semaforo < 7 && Consumer.this.remainingItems > 0) { // enquanto semáforo indica slots cheios no buffer e thread ainda precisa consumir, executa operações      
+                Bufferzinho.semaforo++;                                               
                 Consumer.this.remainingItems--;
                 Bufferzinho.buffer[Bufferzinho.getNextPosition()] = false; // remove item do buffer
 
